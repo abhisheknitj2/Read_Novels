@@ -54,6 +54,18 @@ function App() {
     fetchArticles();
   }, []);
 
+  const handleArticleUpdate = (articleId, updates) => {
+    setArticles(prev =>
+      prev.map(article =>
+        article.id === articleId ? { ...article, ...updates } : article
+      )
+    );
+
+    setCurrentArticle(prev =>
+      prev?.id === articleId ? { ...prev, ...updates } : prev
+    );
+  };
+
   if (loading) {
     return (
       <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center' }}>
@@ -77,6 +89,7 @@ function App() {
           onBack={() => setCurrentArticle(null)}
           preferences={preferences}
           setPreferences={setPreferences}
+          onArticleUpdate={handleArticleUpdate}
         />
       )}
     </div>

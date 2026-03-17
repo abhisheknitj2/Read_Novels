@@ -186,6 +186,14 @@ body {
   backdrop-filter: blur(10px);
 }
 
+.reader-progress-indicator {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
 /* Reader Container */
 .reader-container {
   flex: 1;
@@ -225,6 +233,37 @@ body {
   line-height: var(--reader-line-height);
   color: var(--text-primary);
   white-space: pre-wrap;
+  cursor: text;
+}
+
+.article-highlight {
+  background-color: #b9ef9f;
+  border-radius: 0.2em;
+  box-shadow: 0 0 0 1px rgba(112, 157, 71, 0.15);
+}
+
+.selection-menu {
+  position: fixed;
+  z-index: 40;
+  transform: translate(8px, 8px);
+  background-color: #264d1f;
+  color: #f6fff1;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 12px 24px rgba(0,0,0,0.18);
+}
+
+.selection-menu:hover {
+  background-color: #356c2b;
+}
+
+.selection-menu:disabled {
+  opacity: 0.7;
+  cursor: wait;
 }
 
 /* Settings Modal/Panel */
