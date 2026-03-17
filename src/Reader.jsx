@@ -1,9 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Settings as SettingsIcon } from 'lucide-react';
+import { Settings as SettingsIcon, ArrowLeft } from 'lucide-react';
 import { supabase } from './supabaseClient';
 import Settings from './Settings';
 
-export default function Reader({ article, preferences, setPreferences }) {
+export default function Reader({ article, onBack, preferences, setPreferences }) {
   const containerRef = useRef(null);
   const [isScrolled, setIsScrolled] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -58,6 +58,14 @@ export default function Reader({ article, preferences, setPreferences }) {
   return (
     <div className="main-area">
       <div className={`topbar ${isScrolled ? 'scrolled' : ''}`}>
+        <button 
+          className="icon-btn" 
+          onClick={onBack}
+          title="Back to Library"
+        >
+          <ArrowLeft size={20} />
+          <span style={{ marginLeft: '8px', fontWeight: 500 }}>Library</span>
+        </button>
         <div style={{ flex: 1 }} /> {/* Spacer */}
         <button 
           className="icon-btn" 

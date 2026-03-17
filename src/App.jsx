@@ -13,8 +13,7 @@ function App() {
   const [preferences, setPreferences] = useState({
     'font-size': '1.125rem',
     'line-height': '1.7',
-    'font-family': "'Inter', system-ui, sans-serif",
-    'max-width': '768px'
+    'font-family': "'Inter', system-ui, sans-serif"
   });
 
   // Apply initial preferences
@@ -65,17 +64,21 @@ function App() {
 
   return (
     <div className="app-container">
-      <Sidebar 
-        articles={articles} 
-        currentArticle={currentArticle} 
-        setCurrentArticle={setCurrentArticle} 
-        fetchArticles={fetchArticles}
-      />
-      <Reader 
-        article={currentArticle} 
-        preferences={preferences}
-        setPreferences={setPreferences}
-      />
+      {!currentArticle ? (
+        <Sidebar 
+          articles={articles} 
+          currentArticle={currentArticle} 
+          setCurrentArticle={setCurrentArticle} 
+          fetchArticles={fetchArticles}
+        />
+      ) : (
+        <Reader 
+          article={currentArticle} 
+          onBack={() => setCurrentArticle(null)}
+          preferences={preferences}
+          setPreferences={setPreferences}
+        />
+      )}
     </div>
   );
 }

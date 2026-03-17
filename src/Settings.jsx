@@ -56,14 +56,7 @@ export default function Settings({ open, onClose, preferences, setPreferences })
         </div>
       </div>
 
-      <div className="setting-group">
-        <label>Reading Width</label>
-        <div className="controls-row">
-          <button onClick={() => updatePreference('max-width', `${parseInt(preferences['max-width']) - 50}px`)}>-</button>
-          <span>{parseInt(preferences['max-width'])}</span>
-          <button onClick={() => updatePreference('max-width', `${parseInt(preferences['max-width']) + 50}px`)}>+</button>
-        </div>
-      </div>
+
     </div>
   );
 }
