@@ -117,6 +117,84 @@ function getSelectionOffsets(root) {
   return { start, end };
 }
 
+function getTextNodes(root) {
+  const textNodes = [];
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  let currentNode = walker.nextNode();
+
+  while (currentNode) {
+    textNodes.push(currentNode);
+    currentNode = walker.nextNode();
+  }
+
+  return textNodes;
+}
+
+function getPlainOffsetFromPoint(root, x, y) {
+  let range = null;
+
+  if (document.caretRangeFromPoint) {
+    range = document.caretRangeFromPoint(x, y);
+  } else if (document.caretPositionFromPoint) {
+    const caretPosition = document.caretPositionFromPoint(x, y);
+
+    if (caretPosition) {
+      range = document.createRange();
+      range.setStart(caretPosition.offsetNode, caretPosition.offset);
+      range.setEnd(caretPosition.offsetNode, caretPosition.offset);
+    }
+  }
+
+  if (!range || !root.contains(range.startContainer)) {
+    return null;
+  }
+
+  const textNodes = getTextNodes(root);
+  let offset = 0;
+
+  for (const node of textNodes) {
+    const textLength = node.textContent?.length ?? 0;
+
+    if (node === range.startContainer) {
+      return offset + Math.min(range.startOffset, textLength);
+    }
+
+    offset += textLength;
+  }
+
+  return null;
+}
+
+function createRangeAtPlainOffset(root, plainOffset) {
+  const textNodes = getTextNodes(root);
+  let remaining = Math.max(0, plainOffset);
+
+  for (const node of textNodes) {
+    const textLength = node.textContent?.length ?? 0;
+
+    if (remaining <= textLength) {
+      const range = document.createRange();
+      range.setStart(node, remaining);
+      range.setEnd(node, remaining);
+      return range;
+    }
+
+    remaining -= textLength;
+  }
+
+  const fallbackNode = textNodes[textNodes.length - 1];
+
+  if (!fallbackNode) {
+    return null;
+  }
+
+  const range = document.createRange();
+  const fallbackLength = fallbackNode.textContent?.length ?? 0;
+  range.setStart(fallbackNode, fallbackLength);
+  range.setEnd(fallbackNode, fallbackLength);
+  return range;
+}
+
 function isExactHighlightSelection(content, markedStart, markedEnd) {
   return (
     markedStart >= HIGHLIGHT_OPEN.length &&
@@ -139,6 +217,10 @@ export default function Reader({
   const [pageInfo, setPageInfo] = useState({ current: 1, total: 1 });
   const [menuState, setMenuState] = useState(null);
   const [isSavingHighlight, setIsSavingHighlight] = useState(false);
+  const plainTextLength = useMemo(
+    () => getPlainText(article?.content ?? '').length,
+    [article?.content]
+  );
 
   const renderedSegments = useMemo(
     () => parseHighlightedContent(article?.content ?? ''),
@@ -160,7 +242,7 @@ export default function Reader({
   useEffect(() => {
     if (article && containerRef.current) {
       setTimeout(() => {
-        containerRef.current.scrollTop = article.scroll_progress || 0;
+        restoreReadingPosition();
         updatePageInfo();
       }, 50);
     }
@@ -196,10 +278,59 @@ export default function Reader({
     setPageInfo({ current: currentPage, total: totalPages });
   };
 
+  const restoreReadingPosition = () => {
+    const container = containerRef.current;
+    const body = articleBodyRef.current;
+
+    if (!container || !body || !article) return;
+
+    const storedProgress = Number(article.scroll_progress || 0);
+
+    if (!storedProgress) {
+      container.scrollTop = 0;
+      return;
+    }
+
+    if (storedProgress > plainTextLength) {
+      container.scrollTop = storedProgress;
+      return;
+    }
+
+    const range = createRangeAtPlainOffset(body, storedProgress);
+
+    if (!range) {
+      container.scrollTop = 0;
+      return;
+    }
+
+    const bodyRect = body.getBoundingClientRect();
+    const rangeRect = range.getBoundingClientRect();
+    const relativeTop = rangeRect.top - bodyRect.top;
+    container.scrollTop = Math.max(0, relativeTop - 12);
+  };
+
+  const getReadingAnchor = () => {
+    const container = containerRef.current;
+    const body = articleBodyRef.current;
+
+    if (!container || !body) return 0;
+
+    const containerRect = container.getBoundingClientRect();
+    const probeX = containerRect.left + Math.min(80, containerRect.width / 3);
+    const probeY = containerRect.top + 24;
+    const plainOffset = getPlainOffsetFromPoint(body, probeX, probeY);
+
+    if (plainOffset !== null) {
+      return plainOffset;
+    }
+
+    return Math.max(0, Math.min(plainTextLength, Math.round(container.scrollTop)));
+  };
+
   const handleScroll = () => {
     if (!containerRef.current || !article) return;
 
-    const scrollTop = containerRef.current.scrollTop;
+    const readingAnchor = getReadingAnchor();
     updatePageInfo();
 
     if (saveProgressTimeout.current) clearTimeout(saveProgressTimeout.current);
@@ -208,10 +339,10 @@ export default function Reader({
       try {
         await supabase
           .from('articles')
-          .update({ scroll_progress: scrollTop })
+          .update({ scroll_progress: readingAnchor })
           .eq('id', article.id);
 
-        onArticleUpdate?.(article.id, { scroll_progress: scrollTop });
+        onArticleUpdate?.(article.id, { scroll_progress: readingAnchor });
       } catch (err) {
         console.error('Failed to save progress', err);
       }
