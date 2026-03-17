@@ -5,7 +5,6 @@ import Settings from './Settings';
 
 export default function Reader({ article, onBack, preferences, setPreferences }) {
   const containerRef = useRef(null);
-  const [isScrolled, setIsScrolled] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const saveProgressTimeout = useRef(null);
 
@@ -19,12 +18,11 @@ export default function Reader({ article, onBack, preferences, setPreferences })
     }
   }, [article?.id]);
 
-  // Handle scrolling: Hide topbar and debounce save progress
+  // Persist reading progress without affecting the pinned top bar.
   const handleScroll = () => {
     if (!containerRef.current || !article) return;
     
     const scrollTop = containerRef.current.scrollTop;
-    setIsScrolled(scrollTop > 50);
 
     // Debounced save to Supabase (wait 1 second after last scroll)
     if (saveProgressTimeout.current) clearTimeout(saveProgressTimeout.current);
@@ -57,7 +55,7 @@ export default function Reader({ article, onBack, preferences, setPreferences })
 
   return (
     <div className="main-area">
-      <div className={`topbar ${isScrolled ? 'scrolled' : ''}`}>
+      <div className="topbar">
         <button 
           className="icon-btn" 
           onClick={onBack}
