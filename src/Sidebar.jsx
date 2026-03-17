@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Trash2, BookOpen } from 'lucide-react';
+import { Plus, Trash2, BookOpen, X } from 'lucide-react';
 import { supabase } from './supabaseClient';
 
 export default function Sidebar({ articles, currentArticle, setCurrentArticle, fetchArticles }) {
@@ -142,6 +142,3 @@ export default function Sidebar({ articles, currentArticle, setCurrentArticle, f
     </>
   );
 }
-
-// Need to import X for modal close
-import { X } from 'lucide-react';
