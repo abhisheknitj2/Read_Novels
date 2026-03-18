@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { supabase } from './supabaseClient';
 import Sidebar from './Sidebar';
 import Reader from './Reader';
+import { normalizeArticleContent } from './contentFormatting';
 import './index.css';
 
 function App() {
@@ -31,16 +32,21 @@ function App() {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setArticles(data || []);
+      const normalizedArticles = (data || []).map(article => ({
+        ...article,
+        content: normalizeArticleContent(article.content || ''),
+      }));
+
+      setArticles(normalizedArticles);
       
       // Select the first article if none selected and articles exist
-      if (!currentArticle && data && data.length > 0) {
-        setCurrentArticle(data[0]);
+      if (!currentArticle && normalizedArticles.length > 0) {
+        setCurrentArticle(normalizedArticles[0]);
       } else if (currentArticle) {
         // Keep current article sync'd with fetched data if it exists
-        const updatedCurrent = data?.find(a => a.id === currentArticle.id);
+        const updatedCurrent = normalizedArticles.find(a => a.id === currentArticle.id);
         if (updatedCurrent) setCurrentArticle(updatedCurrent);
-        else if (data && data.length > 0) setCurrentArticle(data[0]);
+        else if (normalizedArticles.length > 0) setCurrentArticle(normalizedArticles[0]);
         else setCurrentArticle(null);
       }
     } catch (err) {

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Plus, Trash2, BookOpen, X } from 'lucide-react';
 import { supabase } from './supabaseClient';
+import { normalizeArticleContent } from './contentFormatting';
 
 export default function Sidebar({ articles, currentArticle, setCurrentArticle, fetchArticles }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -13,9 +14,10 @@ export default function Sidebar({ articles, currentArticle, setCurrentArticle, f
     if (!newTitle.trim() || !newContent.trim()) return;
 
     setIsSaving(true);
+    const normalizedContent = normalizeArticleContent(newContent);
     const { data, error } = await supabase
       .from('articles')
-      .insert([{ title: newTitle, content: newContent, scroll_progress: 0 }])
+      .insert([{ title: newTitle, content: normalizedContent, scroll_progress: 0 }])
       .select();
 
     if (error) {
